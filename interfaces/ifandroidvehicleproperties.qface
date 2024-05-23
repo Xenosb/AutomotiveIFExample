@@ -1,0 +1,1695 @@
+// Copyright (C) 2021 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial
+
+@config: { qml_name: "QtIf.Android.VehicleProperties", namespace: "qt" }
+module QtIfAndroidVehicleProperties 1.0;
+
+/**
+ * \brief Provides an interface to the climate control.
+ *
+ * The QIfHvac provides an interface to the climate control of the vehicle.
+ *
+ * The climate control properties are divided into two categories: central or zoned. The central
+ * properties are exposed directly through the QIfHvac and the zoned properties are
+ * exposed through zone objects. The zones are retrieved using the \l {QIfAbstractZonedFeature::}{zoneAt} method.
+ *
+ * The QIfHvac expects a single backend to be available. It is recommended to use it
+ * with \l {QIfAbstractFeature::}{discoveryMode} set to \l {QIfAbstractFeature::}{AutoDiscovery}.
+ */
+@config: { zoned: true, id: "io.qt.qtif.android.HVAC/1.0", required_permissions: "android.car.permission.CONTROL_CAR_CLIMATE", qml_type: "HVAC" }
+interface QIfHvac {
+    /**
+     * Fan speed setting.
+     *
+     */
+    int fanSpeed;
+
+    /**
+     * Fan direction setting.
+     *
+     */
+    VehicleHvacFanDirection fanDirection;
+
+    /**
+     * HVAC current temperature.
+     *
+     */
+    readonly real temperatureCurrent;
+
+    /**
+     * HVAC, target temperature set.
+     *
+     */
+    real temperatureSet;
+
+    /**
+     * Fan-based defrost for designated window.
+     *
+     */
+    bool defroster;
+
+    /**
+     * On/off AC for designated areaId.
+     *
+     */
+    bool acOn;
+
+    /**
+     * On/off max AC.
+     *
+     * When MAX AC is on, the ECU may adjust the vent position, fan speed,
+     * temperature, etc as necessary to cool the vehicle as quickly as possible.
+     * Any parameters modified as a side effect of turning on/off the MAX AC
+     * parameter shall generate onPropertyEvent() callbacks to the VHAL.
+     *
+     */
+    bool maxAcOn;
+
+    /**
+     * On/off max defrost.
+     *
+     * When MAX DEFROST is on, the ECU may adjust the vent position, fan speed,
+     * temperature, etc as necessary to defrost the windows as quickly as
+     * possible.  Any parameters modified as a side effect of turning on/off
+     * the MAX DEFROST parameter shall generate onPropertyEvent() callbacks to
+     * the VHAL.
+     * The AreaIDs for HVAC_MAX_DEFROST_ON indicate MAX DEFROST can be controlled
+     * in the area.
+     * For example:
+     * areaConfig.areaId = {ROW_1_LEFT | ROW_1_RIGHT} indicates HVAC_MAX_DEFROST_ON
+     * only can be controlled for the front rows.
+     *
+     */
+    bool maxDefrostOn;
+
+    /**
+     * Recirculation on/off.
+     *
+     * Controls the supply of exterior air to the cabin.  Recirc “on” means the
+     * majority of the airflow into the cabin is originating in the cabin.
+     * Recirc “off” means the majority of the airflow into the cabin is coming
+     * from outside the car.
+     *
+     */
+    bool recircOn;
+
+    /**
+     * Enable temperature coupling between areas.
+     *
+     * The AreaIDs for HVAC_DUAL_ON property shall contain a combination of
+     * HVAC_TEMPERATURE_SET AreaIDs that can be coupled together. If
+     * HVAC_TEMPERATURE_SET is mapped to AreaIDs [a_1, a_2, ..., a_n], and if
+     * HVAC_DUAL_ON can be enabled to couple a_i and a_j, then HVAC_DUAL_ON
+     * property must be mapped to [a_i | a_j]. Further, if a_k and a_l can also
+     * be coupled together separately then HVAC_DUAL_ON must be mapped to
+     * [a_i | a_j, a_k | a_l].
+     *
+     * Example: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
+     *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). There are two
+     *  temperature control units -- driver side and passenger side -- which can
+     *  be optionally synchronized. This may be expressed in the AreaIDs this way:
+     *  - HVAC_TEMPERATURE_SET->[ROW_1_LEFT | ROW_2_LEFT, ROW_1_RIGHT | ROW_2_CENTER | ROW_2_RIGHT]
+     *  - HVAC_DUAL_ON->[ROW_1_LEFT | ROW_2_LEFT | ROW_1_RIGHT | ROW_2_CENTER | ROW_2_RIGHT]
+     *
+     * When the property is enabled, the ECU must synchronize the temperature
+     * for the affected areas. Any parameters modified as a side effect
+     * of turning on/off the DUAL_ON parameter shall generate
+     * onPropertyEvent() callbacks to the VHAL. In addition, if setting
+     * a temperature (i.e. driver's temperature) changes another temperature
+     * (i.e. front passenger's temperature), then the appropriate
+     * onPropertyEvent() callbacks must be generated.  If a user changes a
+     * temperature that breaks the coupling (e.g. setting the passenger
+     * temperature independently) then the VHAL must send the appropriate
+     * onPropertyEvent() callbacks (i.e. HVAC_DUAL_ON = false,
+     * HVAC_TEMPERATURE_SET[AreaID] = xxx, etc).
+     *
+     */
+    bool dualOn;
+
+    /**
+     * On/off automatic mode.
+     *
+     */
+    bool autoOn;
+
+    /**
+     * Seat heating/cooling.
+     *
+     * Negative values indicate cooling.
+     * 0 indicates off.
+     * Positive values indicate heating.
+     *
+     * Some vehicles may have multiple levels of heating and cooling. The
+     * min/max range defines the allowable range and number of steps in each
+     * direction.
+     *
+     */
+    int seatTemperature;
+
+    /**
+     * Side Mirror Heat.
+     *
+     * Increasing values denote higher heating levels for side mirrors.
+     * The Max value in the config data represents the highest heating level.
+     * The Min value in the config data MUST be zero and indicates no heating.
+     *
+     */
+    int sideMirrorHeat;
+
+    /**
+     * Steering Wheel Heating/Cooling.
+     *
+     * Sets the amount of heating/cooling for the steering wheel
+     * config data Min and Max MUST be set appropriately.
+     * Positive value indicates heating.
+     * Negative value indicates cooling.
+     * 0 indicates temperature control is off.
+     *
+     */
+    int steeringWheelHeat;
+
+    /**
+     * Temperature units for display.
+     *
+     * Indicates whether the vehicle is displaying temperature to the user as
+     * Celsius or Fahrenheit.
+     * VehiclePropConfig.configArray is used to indicate the supported temperature display units.
+     * For example: configArray[0] = CELSIUS
+     *              configArray[1] = FAHRENHEIT
+     *
+     * This parameter MAY be used for displaying any HVAC temperature in the system.
+     * Values must be one of VehicleUnit::CELSIUS or VehicleUnit::FAHRENHEIT
+     * Note that internally, all temperatures are represented in floating point Celsius.
+     *
+     */
+    VehicleUnit temperatureDisplayUnits;
+
+    /**
+     * Actual fan speed.
+     *
+     */
+    readonly int actualFanSpeed;
+
+    /**
+     * Represents global power state for HVAC. Setting this property to false
+     * MAY mark some properties that control individual HVAC features/subsystems
+     * to UNAVAILABLE state. Setting this property to true MAY mark some
+     * properties that control individual HVAC features/subsystems to AVAILABLE
+     * state (unless any/all of them are UNAVAILABLE on their own individual
+     * merits).
+     *
+     * [Definition] HvacPower_DependentProperties: Properties that need HVAC to be
+     *   powered on in order to enable their functionality. For example, in some cars,
+     *   in order to turn on the AC, HVAC must be powered on first.
+     *
+     * HvacPower_DependentProperties list must be set in the
+     * VehiclePropConfig.configArray. HvacPower_DependentProperties must only contain
+     * properties that are associated with VehicleArea:SEAT. Properties that are not
+     * associated with VehicleArea:SEAT, for example, HVAC_DEFROSTER, must never
+     * depend on HVAC_POWER_ON property and must never be part of
+     * HvacPower_DependentProperties list.
+     *
+     * AreaID mapping for HVAC_POWER_ON property must contain all AreaIDs that
+     * HvacPower_DependentProperties are mapped to.
+     *
+     * Example 1: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three back
+     *  seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). If the HVAC features (AC,
+     *  Temperature etc.) throughout the car are dependent on a single HVAC power
+     *  controller then HVAC_POWER_ON must be mapped to
+     *  [ROW_1_LEFT | ROW_1_RIGHT | ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT].
+     *
+     * Example 2: A car has two seats in the front row (ROW_1_LEFT, ROW_1_RIGHT) and
+     *   three seats in the second (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT) and third
+     *   rows (ROW_3_LEFT, ROW_3_CENTER, ROW_3_RIGHT). If the car has temperature
+     *   controllers in the front row which can operate entirely independently of
+     *   temperature controllers in the back of the vehicle, then HVAC_POWER_ON
+     *   must be mapped to a two element array:
+     *   - ROW_1_LEFT | ROW_1_RIGHT
+     *   - ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT | ROW_3_LEFT | ROW_3_CENTER | ROW_3_RIGHT
+     *
+     */
+    bool powerOn;
+
+    /**
+     * Automatic recirculation on/off.
+     *
+     * When automatic recirculation is ON, the HVAC system may automatically
+     * switch to recirculation mode if the vehicle detects poor incoming air
+     * quality.
+     *
+     */
+    bool autoRecircOn;
+
+    /**
+     * Seat ventilation.
+     *
+     * 0 indicates off.
+     * Positive values indicates ventilation level.
+     *
+     * Used by HVAC apps and Assistant to enable, change, or read state of seat
+     * ventilation.  This is different than seating cooling. It can be on at the
+     * same time as cooling, or not.
+     *
+     */
+    int seatVentilation;
+}
+
+/**
+ * \brief Provides an interface to the window control.
+ *
+ * The QIfWindowControl provides an interface to control the physical windows of the vehicle.
+ *
+ * All properties are exposed through zone objects. The zones are retrieved using the \l {QIfAbstractZonedFeature::}{zoneAt} method.
+ *
+ * The QIfWindowControl expects a single backend to be available. It is recommended to use it
+ * with \l {QIfAbstractFeature::}{discoveryMode} set to \l {QIfAbstractZonedFeature::}{zoneAt}.
+ */
+@config: { zoned: true, id: "io.qt.qtif.android.WindowControl/1.0", required_permissions: "android.car.permission.CONTROL_CAR_WINDOWS", qml_type: "WindowControl" }
+interface QIfWindowControl {
+    /**
+     * Window Position.
+     *
+     * Min = window up / closed
+     * Max = window down / open
+     *
+     * For a window that may open out of plane (i.e. vent mode of sunroof) this
+     * parameter will work with negative values as follows:
+     *  Max = sunroof completely open
+     *  0 = sunroof closed.
+     *  Min = sunroof vent completely open
+     *
+     *  Note that in this mode, 0 indicates the window is closed.
+     *
+     */
+    int windowPos;
+
+    /**
+     * Window Move.
+     *
+     * Max = Open the window as fast as possible
+     * Min = Close the window as fast as possible
+     * Magnitude denotes relative speed.  I.e. +2 is faster than +1 in closing
+     * the window.
+     *
+     * For a window that may open out of plane (i.e. vent mode of sunroof) this
+     * parameter will work as follows:
+     *
+     * If sunroof is open:
+     *   Max = open the sunroof further, automatically stop when fully open.
+     *   Min = close the sunroof, automatically stop when sunroof is closed.
+     *
+     * If vent is open:
+     *   Max = close the vent, automatically stop when vent is closed.
+     *   Min = open the vent further, automatically stop when vent is fully open.
+     *
+     * If sunroof is in the closed position:
+     *   Max = open the sunroof, automatically stop when sunroof is fully open.
+     *   Min = open the vent, automatically stop when vent is fully open.
+     *
+     */
+    readonly int windowMove;
+
+    /**
+     * Window Lock.
+     *
+     * True indicates windows are locked and can't be moved.
+     *
+     */
+    readonly bool windowLock;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.CarInfo/1.0", required_permissions: "android.car.permission.CAR_IDENTIFICATION", qml_type: "CarInfo" }
+interface QIfCarInfo {
+    /**
+     * Model year of vehicle.
+     *
+     */
+    readonly int infoModelYear;
+
+    /**
+     * Fuel capacity of the vehicle in milliliters.
+     *
+     */
+    readonly real infoFuelCapacity;
+
+    /**
+     * Battery capacity of the vehicle, if EV or hybrid.
+     *
+     * This is the nominal battery capacity when the vehicle is new.
+     *
+     */
+    readonly real infoEvBatteryCapacity;
+
+    /**
+     * Fuel door location.
+     *
+     */
+    readonly PortLocationType infoFuelDoorLocation;
+
+    /**
+     * EV port location.
+     *
+     */
+    readonly PortLocationType infoEvPortLocation;
+
+    /**
+     * Driver's seat location.
+     *
+     * VHAL implementations must ignore the areaId. Use VehicleArea:GLOBAL.
+     *
+     */
+    readonly VehicleAreaSeat infoDriverSeat;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.MirrorControl/1.0", required_permissions: "android.car.permission.GET_CAR_VENDOR_CATEGORY_MIRROR", qml_type: "MirrorControl" }
+interface QIfMirrorControl {
+    /**
+     * Mirror Z Position.
+     *
+     * Positive value indicates tilt upwards, negative value is downwards
+     *
+     */
+    int mirrorZPos;
+
+    /**
+     * Mirror Z Move.
+     *
+     * Positive value indicates tilt upwards, negative value is downwards
+     *
+     */
+    readonly int mirrorZMove;
+
+    /**
+     * Mirror Y Position.
+     *
+     * Positive value indicate tilt right, negative value is left
+     *
+     */
+    int mirrorYPos;
+
+    /**
+     * Mirror Y Move.
+     *
+     * Positive value indicate tilt right, negative value is left
+     *
+     */
+    readonly int mirrorYMove;
+
+    /**
+     * Mirror Lock.
+     *
+     * True indicates mirror positions are locked and not changeable
+     *
+     */
+    bool mirrorLock;
+
+    /**
+     * Mirror Fold.
+     *
+     * True indicates mirrors are folded
+     *
+     */
+    bool mirrorFold;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.SeatControl/1.0", required_permissions: "android.car.permission.CONTROL_CAR_SEATS", qml_type: "SeatControl" }
+interface QIfSeatControl {
+    /**
+     * Seat memory select.
+     *
+     * This parameter selects the memory preset to use to select the seat
+     * position. The minValue is always 0, and the maxValue determines the
+     * number of seat positions available.
+     *
+     * For instance, if the driver's seat has 3 memory presets, the maxValue
+     * will be 3. When the user wants to select a preset, the desired preset
+     * number (1, 2, or 3) is set.
+     *
+     */
+    readonly int seatMemorySelect;
+
+    /**
+     * Seat memory set.
+     *
+     * This setting allows the user to save the current seat position settings
+     * into the selected preset slot.  The maxValue for each seat position
+     * must match the maxValue for SEAT_MEMORY_SELECT.
+     *
+     */
+    readonly int seatMemorySet;
+
+    /**
+     * Seatbelt buckled.
+     *
+     * True indicates belt is buckled.
+     *
+     * Write access indicates automatic seat buckling capabilities.  There are
+     * no known cars at this time, but you never know...
+     *
+     */
+    readonly bool seatBeltBuckled;
+
+    /**
+     * Seatbelt buckled.
+     *
+     * Adjusts the shoulder belt anchor point.
+     * Max value indicates highest position
+     * Min value indicates lowest position
+     *
+     */
+    readonly int seatBeltHeightPos;
+
+    /**
+     * Seatbelt height move.
+     *
+     */
+    readonly int seatBeltHeightMove;
+
+    /**
+     * Seat fore/aft position.
+     *
+     * Sets the seat position forward (closer to steering wheel) and backwards.
+     * Max value indicates closest to wheel, min value indicates most rearward
+     * position.
+     *
+     */
+    readonly int seatForeAftPos;
+
+    /**
+     * Seat fore/aft move.
+     *
+     * Moves the seat position forward and aft.
+     *
+     */
+    readonly int seatForeAftMove;
+
+    /**
+     * Seat backrest angle 1 position.
+     *
+     * Backrest angle 1 is the actuator closest to the bottom of the seat.
+     * Max value indicates angling forward towards the steering wheel.
+     * Min value indicates full recline.
+     *
+     */
+    readonly int seatBackrestAngle1Pos;
+
+    /**
+     * Seat backrest angle 1 move.
+     *
+     * Moves the backrest forward or recline.
+     *
+     */
+    readonly int seatBackrestAngle1Move;
+
+    /**
+     * Seat backrest angle 2 position.
+     *
+     * Backrest angle 2 is the next actuator up from the bottom of the seat.
+     * Max value indicates angling forward towards the steering wheel.
+     * Min value indicates full recline.
+     *
+     */
+    readonly int seatBackrestAngle2Pos;
+
+    /**
+     * Seat backrest angle 2 move.
+     *
+     * Moves the backrest forward or recline.
+     *
+     */
+    readonly int seatBackrestAngle2Move;
+
+    /**
+     * Seat height position.
+     *
+     * Sets the seat height.
+     * Max value indicates highest position.
+     * Min value indicates lowest position.
+     *
+     */
+    readonly int seatHeightPos;
+
+    /**
+     * Seat height move.
+     *
+     * Moves the seat height.
+     *
+     */
+    readonly int seatHeightMove;
+
+    /**
+     * Seat depth position.
+     *
+     * Sets the seat depth, distance from back rest to front edge of seat.
+     * Max value indicates longest depth position.
+     * Min value indicates shortest position.
+     *
+     */
+    readonly int seatDepthPos;
+
+    /**
+     * Seat depth move.
+     *
+     * Adjusts the seat depth.
+     *
+     */
+    readonly int seatDepthMove;
+
+    /**
+     * Seat tilt position.
+     *
+     * Sets the seat tilt.
+     * Max value indicates front edge of seat higher than back edge.
+     * Min value indicates front edge of seat lower than back edge.
+     *
+     */
+    readonly int seatTiltPos;
+
+    /**
+     * Seat tilt move.
+     *
+     * Tilts the seat.
+     *
+     */
+    readonly int seatTiltMove;
+
+    /**
+     * Lumber fore/aft position.
+     *
+     * Pushes the lumbar support forward and backwards
+     * Max value indicates most forward position.
+     * Min value indicates most rearward position.
+     *
+     */
+    readonly int seatLumbarForeAftPos;
+
+    /**
+     * Lumbar fore/aft move.
+     *
+     * Adjusts the lumbar support.
+     *
+     */
+    readonly int seatLumbarForeAftMove;
+
+    /**
+     * Lumbar side support position.
+     *
+     * Sets the amount of lateral lumbar support.
+     * Max value indicates widest lumbar setting (i.e. least support)
+     * Min value indicates thinnest lumbar setting.
+     *
+     */
+    readonly int seatLumbarSideSupportPos;
+
+    /**
+     * Lumbar side support move.
+     *
+     * Adjusts the amount of lateral lumbar support.
+     *
+     */
+    readonly int seatLumbarSideSupportMove;
+
+    /**
+     * Headrest height position.
+     *
+     * Sets the headrest height.
+     * Max value indicates tallest setting.
+     * Min value indicates shortest setting.
+     *
+     */
+    readonly int seatHeadrestHeightPos;
+
+    /**
+     * Headrest height move.
+     *
+     * Moves the headrest up and down.
+     *
+     */
+    readonly int seatHeadrestHeightMove;
+
+    /**
+     * Headrest angle position.
+     *
+     * Sets the angle of the headrest.
+     * Max value indicates most upright angle.
+     * Min value indicates shallowest headrest angle.
+     *
+     */
+    readonly int seatHeadrestAnglePos;
+
+    /**
+     * Headrest angle move.
+     *
+     * Adjusts the angle of the headrest
+     *
+     */
+    readonly int seatHeadrestAngleMove;
+
+    /**
+     * Headrest fore/aft position.
+     *
+     * Adjusts the headrest forwards and backwards.
+     * Max value indicates position closest to front of car.
+     * Min value indicates position closest to rear of car.
+     *
+     */
+    readonly int seatHeadrestForeAftPos;
+
+    /**
+     * Headrest fore/aft move.
+     *
+     */
+    readonly int seatHeadrestForeAftMove;
+
+    /**
+     * Seat Occupancy.
+     *
+     * Indicates whether a particular seat is occupied or not, to the best of the car's ability
+     * to determine. Valid values are from the VehicleSeatOccupancyState enum.
+     *
+     */
+    VehicleSeatOccupancyState seatOccupancy;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.TireControl/1.0", required_permissions: ["android.car.permission.VENDOR_EXTENSION","android.car.permission.CAR_TIRES"], qml_type: "TireControl" }
+interface QIfTireControl {
+    /**
+     * Tire pressure.
+     *
+     * Each tires is identified by its areaConfig.areaId config and their
+     * minFloatValue/maxFloatValue are used to store OEM recommended pressure
+     * range.
+     * The Min value in the areaConfig data represents the lower bound of
+     * the recommended tire pressure.
+     * The Max value in the areaConfig data represents the upper bound of
+     * the recommended tire pressure.
+     * For example:
+     * The following areaConfig indicates the recommended tire pressure
+     * of left_front tire is from 200.0 KILOPASCAL to 240.0 KILOPASCAL.
+     * .areaConfigs = {
+     *      VehicleAreaConfig {
+     *          .areaId = VehicleAreaWheel::LEFT_FRONT,
+     *          .minFloatValue = 200.0,
+     *          .maxFloatValue = 240.0,
+     *      }
+     * },
+     *
+     */
+    readonly real tirePressure;
+
+    /**
+     * Tire pressure units for display.
+     *
+     * Indicates which units the car is using to display tire pressure to the user. Eg. PSI, Bar or
+     * Kilopascal.
+     *
+     * VehiclePropConfig.configArray is used to indicate the supported pressure display units.
+     * Pressure units are defined in VehicleUnit.
+     * For example: configArray[0] = KILOPASCAL
+     *              configArray[1] = PSI
+     *              configArray[2] = BAR
+     */
+    VehicleUnit tirePressureDisplayUnits;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.LightsControl/1.0", required_permissions: ["android.car.permission.CAR_EXTERIOR_LIGHTS", "android.car.permission.CONTROL_CAR_EXTERIOR_LIGHTS", "android.car.permission.READ_CAR_INTERIOR_LIGHTS", "android.car.permission.CONTROL_CAR_INTERIOR_LIGHTS"], qml_type: "LightsControl" }
+interface QIfLightsControl {
+    /**
+     * Headlights State.
+     *
+     * Return the current state of headlights.
+     *
+     */
+    readonly VehicleLightState headlightsState;
+
+    /**
+     * High beam lights state.
+     *
+     * Return the current state of high beam lights.
+     *
+     */
+    readonly VehicleLightState highbeamLightsState;
+
+    /**
+     * Fog light state.
+     *
+     * Return the current state of fog lights.
+     *
+     */
+    readonly VehicleLightState fogLightsState;
+
+    /**
+     * Hazard light status.
+     *
+     * Return the current status of hazard lights.
+     *
+     */
+    readonly VehicleLightState hazardLightsState;
+
+    /**
+     * Headlight switch.
+     *
+     * The setting that the user wants.
+     *
+     */
+    VehicleLightSwitch headlightsSwitch;
+
+    /**
+     * High beam light switch.
+     *
+     * The setting that the user wants.
+     *
+     */
+    VehicleLightSwitch highbeamLightsSwitch;
+
+    /**
+     * Fog light switch.
+     *
+     * The setting that the user wants.
+     *
+     */
+    VehicleLightSwitch fogLightsSwitch;
+
+    /**
+     * Hazard light switch.
+     *
+     * The setting that the user wants.
+     *
+     */
+    VehicleLightSwitch hazardLightsSwitch;
+
+    /**
+     * Cabin lights.
+     *
+     * Return current status of cabin lights.
+     *
+     */
+    VehicleLightState cabinLightsState;
+
+    /**
+     * Cabin lights switch.
+     *
+     * The position of the physical switch which controls the cabin lights.
+     * This might be different than the CABIN_LIGHTS_STATE if the lights are on because a door
+     * is open or because of a voice command.
+     * For example, while the switch is in the "off" or "automatic" position.
+     *
+     */
+    VehicleLightSwitch cabinLightsSwitch;
+
+    /**
+     * Reading lights.
+     *
+     * Return current status of reading lights.
+     *
+     */
+    VehicleLightState readingLightsState;
+
+    /**
+     * Reading lights switch.
+     *
+     * The position of the physical switch which controls the reading lights.
+     * This might be different than the READING_LIGHTS_STATE if the lights are on because a door
+     * is open or because of a voice command.
+     * For example, while the switch is in the "off" or "automatic" position.
+     *
+     */
+    VehicleLightSwitch readingLightsSwitch;
+
+    /**
+     * Night mode.
+     *
+     * True indicates that the night mode sensor has detected that the car cabin environment has
+     * low light. The platform could use this, for example, to enable appropriate UI for
+     * better viewing in dark or low light environments.
+     *
+     */
+    readonly bool nightMode;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.FuelControl/1.0", required_permissions: ["android.car.permission.VENDOR_EXTENSION","android.car.permission.READ_CAR_DISPLAY_UNITS", "android.car.permission.CONTROL_CAR_DISPLAY_UNITS", "android.car.permission.CAR_ENERGY", "android.car.permission.CONTROL_CAR_ENERGY_PORTS", "android.car.permission.CAR_INFO"], qml_type: "FuelControl" }
+interface QIfFuelControl {
+    /**
+     * Fuel remaining in the vehicle, in milliliters.
+     *
+     * Value may not exceed INFO_FUEL_CAPACITY
+     *
+     */
+    readonly real fuelLevel;
+
+    /**
+     * Fuel door open.
+     *
+     */
+    bool fuelDoorOpen;
+
+    /**
+     * Warning for fuel low level.
+     *
+     * This property corresponds to the low fuel warning on the dashboard.
+     * Once FUEL_LEVEL_LOW is set, it should not be cleared until more fuel is
+     * added to the vehicle.  This property may take into account all fuel
+     * sources for a vehicle - for example:
+     *
+     *   For a gas powered vehicle, this property is based soley on gas level.
+     *   For a battery powered vehicle, this property is based solely on battery level.
+     *   For a hybrid vehicle, this property may be based on the combination of gas and battery
+     *      levels, at the OEM's discretion.
+     *
+     */
+    readonly bool fuelLevelLow;
+
+    /**
+     * Fuel volume units for display.
+     *
+     * Indicates which units the car is using to display fuel volume to the user. Eg. Liter or
+     * Gallon.
+     *
+     * VehiclePropConfig.configArray is used to indicate the supported fuel volume display units.
+     * Volume units are defined in VehicleUnit.
+     * For example: configArray[0] = LITER
+     *              configArray[1] = GALLON
+     */
+    VehicleUnit fuelVolumeDisplayUnits;
+
+    /**
+     * Fuel consumption units for display.
+     *
+     * Indicates type of units the car is using to display fuel consumption information to user
+     * True indicates units are distance over volume such as MPG.
+     * False indicates units are volume over distance such as L/100KM.
+     *
+     */
+    bool fuelConsumptionUnitsDistanceOverVolume;
+
+    /**
+     * Range remaining.
+     *
+     * Meters remaining of fuel and charge.  Range remaining shall account for
+     * all energy sources in a vehicle.  For example, a hybrid car's range will
+     * be the sum of the ranges based on fuel and battery.
+     *
+     */
+    readonly real rangeRemaining;
+
+    /**
+     * EV battery level in WH, if EV or hybrid.
+     *
+     * Value may not exceed INFO_EV_BATTERY_CAPACITY
+     *
+     */
+    readonly real evBatteryLevel;
+
+    /**
+     * EV charge port open.
+     *
+     */
+    readonly bool evChargePortOpen;
+
+    /**
+     * EV charge port connected.
+     *
+     */
+    readonly bool evChargePortConnected;
+
+    /**
+     * EV instantaneous charge rate in milliwatts.
+     *
+     * Positive value indicates battery is being charged.
+     * Negative value indicates battery being discharged.
+     *
+     */
+    readonly real evBatteryInstantaneousChargeRate;
+
+    /**
+     * EV battery units for display.
+     *
+     * Indicates which units the car is using to display EV battery information to the user. Eg.
+     * watt-hours(Wh), kilowatt-hours(kWh) or ampere-hours(Ah).
+     *
+     * VehiclePropConfig.configArray is used to indicate the supported electrical energy units.
+     * Electrical energy units are defined in VehicleUnit.
+     * For example: configArray[0] = WATT_HOUR
+     *              configArray[1] = AMPERE_HOURS
+     *              configArray[2] = KILOWATT_HOUR
+     */
+    VehicleUnit evBatteryDisplayUnits;
+
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.DoorControl/1.0", required_permissions: ["android.car.permission.CONTROL_CAR_DOORS", "android.car.permission.CAR_INFO"], qml_type: "DoorControl" }
+interface QIfDoorControl {
+    /**
+     * Door position.
+     *
+     * This is an integer in case a door may be set to a particular position.
+     * Max value indicates fully open, min value (0) indicates fully closed.
+     *
+     * Some vehicles (minivans) can open the door electronically.  Hence, the
+     * ability to write this property.
+     *
+     */
+    int doorPos;
+
+    /**
+     * Door move.
+     *
+     */
+    readonly int doorMove;
+
+    /**
+     * Door lock.
+     *
+     * 'true' indicates door is locked
+     *
+     */
+    bool doorLock;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.DriveInfo/1.0", required_permissions: ["android.car.permission.VENDOR_EXTENSION","android.car.permission.READ_CAR_DISPLAY_UNITS", "android.car.permission.CONTROL_CAR_DISPLAY_UNITS", "android.car.permission.CAR_POWERTRAIN", "android.car.permission.CAR_POWER", "android.car.permission.CAR_ENGINE_DETAILED", "android.car.permission.CAR_DYNAMICS_STATE", "android.car.permission.CAR_SPEED", "android.car.permission.CAR_INFO"], qml_type: "DriveInfo" }
+interface QIfDriveInfo {
+    /**
+     * Current odometer value of the vehicle.
+     *
+     */
+    readonly real perfOdometer;
+
+    /**
+     * Speed of the vehicle.
+     *
+     */
+    readonly real perfVehicleSpeed;
+
+    /**
+     * Speed of the vehicle for displays.
+     *
+     * Some cars display a slightly slower speed than the actual speed.  This is
+     * usually displayed on the speedometer.
+     *
+     */
+    readonly real perfVehicleSpeedDisplay;
+
+    /**
+     * Front bicycle model steering angle for vehicle.
+     *
+     * Angle is in degrees.  Left is negative.
+     *
+     */
+    readonly real perfSteeringAngle;
+
+    /**
+     * Currently selected gear.
+     *
+     * This is the gear selected by the user.
+     *
+     * Values in the config data must represent the list of supported gears
+     * for this vehicle.  For example, config data for an automatic transmission
+     * must contain {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_DRIVE,
+     * GEAR_1, GEAR_2,...} and for manual transmission the list must be
+     * {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}
+     *
+     */
+    readonly VehicleGear gearSelection;
+
+    /**
+     * Current gear. In non-manual case, selected gear may not
+     * match the current gear. For example, if the selected gear is GEAR_DRIVE,
+     * the current gear will be one of GEAR_1, GEAR_2 etc, which reflects
+     * the actual gear the transmission is currently running in.
+     *
+     * Values in the config data must represent the list of supported gears
+     * for this vehicle.  For example, config data for an automatic transmission
+     * must contain {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_1, GEAR_2,...}
+     * and for manual transmission the list must be
+     * {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}. This list need not be the
+     * same as that of the supported gears reported in GEAR_SELECTION.
+     *
+     */
+    readonly VehicleGear currentGear;
+
+    /**
+     * Parking brake state.
+     *
+     */
+    readonly bool parkingBrakeOn;
+
+    /**
+     * Auto-apply parking brake.
+     *
+     */
+    readonly bool parkingBrakeAutoApply;
+
+    /**
+     * State of the vehicles turn signals.
+     *
+     */
+    readonly VehicleTurnSignal turnSignalState;
+
+    /**
+     * Represents ignition state.
+     *
+     */
+    readonly VehicleIgnitionState ignitionState;
+
+    /**
+     * ABS is active.
+     *
+     * Set to true when ABS is active.  Reset to false when ABS is off.  This
+     * property may be intermittently set (pulsing) based on the real-time
+     * state of the ABS system.
+     *
+     */
+    readonly bool absActive;
+
+    /**
+     * Traction Control is active.
+     *
+     * Set to true when traction control (TC) is active.  Reset to false when
+     * TC is off.  This property may be intermittently set (pulsing) based on
+     * the real-time state of the TC system.
+     *
+     */
+    readonly bool tractionControlActive;
+
+    /**
+     * Distance units for display.
+     *
+     * Indicates which units the car is using to display distances to the user. Eg. Mile, Meter
+     * Kilometer.
+     *
+     * Distance units are defined in VehicleUnit.
+     * VehiclePropConfig.configArray is used to indicate the supported distance display units.
+     * For example: configArray[0] = METER
+     *              configArray[1] = KILOMETER
+     *              configArray[2] = MILE
+     */
+    VehicleUnit distanceDisplayUnits;
+
+    /**
+     * Speed units for display.
+     *
+     * Indicates type of units the car is using to display speed to user. Eg. m/s, km/h, or mph.
+     *
+     * VehiclePropConfig.configArray is used to indicate the supported speed display units.
+     * Pressure units are defined in VehicleUnit.
+     * For example: configArray[0] = METER_PER_SEC
+     *              configArray[1] = MILES_PER_HOUR
+     *              configArray[2] = KILOMETERS_PER_HOUR
+     */
+    int vehicleSpeedDisplayUnits;
+
+    /**
+     * Outside temperature.
+     *
+     */
+    readonly real envOutsideTemperature;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.EngineInfo/1.0", required_permissions: ["android.car.permission.READ_CAR_DISPLAY_UNITS", "android.car.permission.CONTROL_CAR_DISPLAY_UNITS", "android.car.permission.CAR_ENGINE_DETAILED", "android.car.permission.CAR_DYNAMICS_STATE", "android.car.permission.CAR_INFO"], qml_type: "EngineInfo" }
+interface QIfEngineInfo {
+    /**
+     * Temperature of engine coolant.
+     *
+     */
+    readonly real engineCoolantTemp;
+
+    /**
+     * Engine oil level.
+     *
+     */
+    readonly VehicleOilLevel engineOilLevel;
+
+    /**
+     * Temperature of engine oil.
+     *
+     */
+    readonly real engineOilTemp;
+
+    /**
+     * Engine rpm.
+     *
+     */
+    readonly real engineRpm;
+}
+
+@config: { zoned: true, id: "io.qt.qtif.android.HWcontrol/1.0", required_permissions: ["android.car.permission.BIND_CAR_INPUT_SERVICE", "android.car.permission.CAR_POWER", "android.car.permission.CAR_INFO"], qml_type: "HWControl" }
+interface QIfHWControl {
+    /**
+     * Property to report bootup reason for the current power on. This is a
+     * static property that will not change for the whole duration until power
+     * off. For example, even if user presses power on button after automatic
+     * power on with door unlock, bootup reason must stay with
+     * VehicleApPowerBootupReason#USER_UNLOCK.
+     *
+     * int32Values[0] must be VehicleApPowerBootupReason.
+     *
+    */
+    readonly int apPowerBootupReason;
+
+    /**
+     * Property to represent brightness of the display. Some cars have single
+     * control for the brightness of all displays and this property is to share
+     * change in that control.
+     *
+     * If this is writable, android side can set this value when user changes
+     * display brightness from Settings. If this is read only, user may still
+     * change display brightness from Settings, but that must not be reflected
+     * to other displays.
+     *
+     */
+    int displayBrightness;
+}
+
+// FLAGS
+
+/**
+ * Used by seat occupancy to enumerate the current occupancy state of the seat.
+ */
+flag VehicleSeatOccupancyState {
+    VEHICLE_SEAT_OCCUPANCY_STATE_UNKNOWN = 0,
+    VEHICLE_SEAT_OCCUPANCY_STATE_VACANT = 1,
+    VEHICLE_SEAT_OCCUPANCY_STATE_OCCUPIED = 2
+}
+
+/**
+ * Used by lights state properties to enumerate the current state of the lights.
+ *
+ * Most XXX_LIGHTS_STATE properties will only report ON and OFF states.  Only
+ * the HEADLIGHTS_STATE property will report DAYTIME_RUNNING.
+ */
+flag VehicleLightState {
+    VEHICLE_LIGHT_STATE_OFF = 0,
+    VEHICLE_LIGHT_STATE_ON = 1,
+    VEHICLE_LIGHT_STATE_DAYTIME_RUNNING = 2
+}
+
+/**
+ * Used by lights switch properties to enumerate user selected switch setting.
+ *
+ * XXX_LIGHTS_SWITCH properties report the switch settings that the user
+ * selects.  The switch setting may be decoupled from the state reported if the
+ * user selects AUTOMATIC.
+ */
+flag VehicleLightSwitch {
+    VEHICLE_LIGHT_SWITCH_OFF = 0,
+    VEHICLE_LIGHT_SWITCH_ON = 1,
+    /**
+     * Daytime running lights mode.  Most cars automatically use DRL but some
+     * cars allow the user to activate them manually.
+     */
+    VEHICLE_LIGHT_SWITCH_DAYTIME_RUNNING = 2,
+    /**
+     * Allows the vehicle ECU to set the lights automatically.
+     */
+    VEHICLE_LIGHT_SWITCH_AUTOMATIC = 0x100,
+}
+
+/**
+ * Used by INFO_EV_CONNECTOR_TYPE to enumerate the type of connectors
+ * available to charge the vehicle.
+ */
+flag EvConnectorType {
+    /**
+     * Default type if the vehicle does not know or report the EV connector
+     * type.
+     */
+    EV_CONNECTOR_TYPE_UNKNOWN = 0,
+    EV_CONNECTOR_TYPE_IEC_TYPE_1_AC = 1,              // aka Yazaki
+    EV_CONNECTOR_TYPE_IEC_TYPE_2_AC = 2,              // aka Mennekes
+    EV_CONNECTOR_TYPE_IEC_TYPE_3_AC = 3,              // aka Scame
+    EV_CONNECTOR_TYPE_IEC_TYPE_4_DC = 4,              // aka CHAdeMO
+    EV_CONNECTOR_TYPE_IEC_TYPE_1_CCS_DC = 5,          // aka Combo 1
+    EV_CONNECTOR_TYPE_IEC_TYPE_2_CCS_DC = 6,          // aka Combo 2
+    EV_CONNECTOR_TYPE_TESLA_ROADSTER = 7,
+    EV_CONNECTOR_TYPE_TESLA_HPWC = 8,
+    EV_CONNECTOR_TYPE_TESLA_SUPERCHARGER = 9,
+    EV_CONNECTOR_TYPE_GBT_AC = 10,
+    EV_CONNECTOR_TYPE_GBT_DC = 11,
+
+    /**
+     * Connector type to use when no other types apply. Before using this
+     * value, work with Google to see if the EvConnectorType enum can be
+     * extended with an appropriate value.
+     */
+    EV_CONNECTOR_TYPE_OTHER = 101,
+}
+
+/**
+ * Used by INFO_FUEL_DOOR_LOCATION/INFO_CHARGE_PORT_LOCATION to enumerate fuel door or
+ * ev port location.
+ */
+flag PortLocationType {
+    /**
+     * Default type if the vehicle does not know or report the Fuel door
+     * and ev port location.
+     */
+    PORT_LOCATION_TYPE_UNKNOWN = 0,
+    PORT_LOCATION_TYPE_FRONT_LEFT = 1,
+    PORT_LOCATION_TYPE_FRONT_RIGHT = 2,
+    PORT_LOCATION_TYPE_REAR_RIGHT = 3,
+    PORT_LOCATION_TYPE_REAR_LEFT = 4,
+    PORT_LOCATION_TYPE_FRONT = 5,
+    PORT_LOCATION_TYPE_REAR = 6,
+}
+
+/**
+ * Used by INFO_FUEL_TYPE to enumerate the type of fuels this vehicle uses.
+ * Consistent with projection protocol.
+ */
+flag FuelType {
+    /**
+     * Fuel type to use if the HU does not know on which types of fuel the vehicle
+     * runs. The use of this value is generally discouraged outside of aftermarket units.
+     */
+    FUEL_TYPE_UNKNOWN = 0,
+    /** Unleaded gasoline */
+    FUEL_TYPE_UNLEADED = 1,
+    /** Leaded gasoline */
+    FUEL_TYPE_LEADED = 2,
+    /** Diesel #1 */
+    FUEL_TYPE_DIESEL_1 = 3,
+    /** Diesel #2 */
+    FUEL_TYPE_DIESEL_2 = 4,
+    /** Biodiesel */
+    FUEL_TYPE_BIODIESEL = 5,
+    /** 85% ethanol/gasoline blend */
+    FUEL_TYPE_E85 = 6,
+    /** Liquified petroleum gas */
+    FUEL_TYPE_LPG = 7,
+    /** Compressed natural gas */
+    FUEL_TYPE_CNG = 8,
+    /** Liquified natural gas */
+    FUEL_TYPE_LNG = 9,
+    /** Electric */
+    FUEL_TYPE_ELECTRIC = 10,
+    /** Hydrogen fuel cell */
+    FUEL_TYPE_HYDROGEN = 11,
+    /**
+     * Fuel type to use when no other types apply. Before using this value, work with
+     * Google to see if the FuelType enum can be extended with an appropriate value.
+     */
+    FUEL_TYPE_OTHER = 12,
+}
+
+/**
+ * Bit flags for fan direction.
+ */
+flag VehicleHvacFanDirection {
+    VEHICLE_HVAC_FAN_DIRECTION_UNKNOWN = 0x0,
+
+    VEHICLE_HVAC_FAN_DIRECTION_FACE = 0x1,
+    VEHICLE_HVAC_FAN_DIRECTION_FLOOR = 0x2,
+    /**
+     * FACE_AND_FLOOR = FACE | FLOOR
+     */
+    VEHICLE_HVAC_FAN_DIRECTION_FACE_AND_FLOOR = 0x3,
+    VEHICLE_HVAC_FAN_DIRECTION_DEFROST = 0x4,
+    /**
+     * DEFROST_AND_FLOOR = DEFROST | FLOOR
+     */
+    VEHICLE_HVAC_FAN_DIRECTION_DEFROST_AND_FLOOR = 0x06,
+}
+
+flag VehicleOilLevel {
+    /**
+     * Oil level values.
+     */
+    VEHICLE_OIL_LEVEL_CRITICALLY_LOW = 0,
+    VEHICLE_OIL_LEVEL_LOW = 1,
+    VEHICLE_OIL_LEVEL_NORMAL = 2,
+    VEHICLE_OIL_LEVEL_HIGH = 3,
+    VEHICLE_OIL_LEVEL_ERROR = 4,
+}
+
+flag VehicleApPowerStateConfigFlag {
+    /**
+     * AP can enter deep sleep state. If not set, AP will always shutdown from
+     * VehicleApPowerState#SHUTDOWN_PREPARE power state.
+     */
+    ENABLE_DEEP_SLEEP_FLAG = 0x1,
+
+    /**
+     * The power controller can power on AP from off state after timeout
+     * specified in VehicleApPowerSet VEHICLE_AP_POWER_SET_SHUTDOWN_READY message.
+     */
+    CONFIG_SUPPORT_TIMER_POWER_ON_FLAG = 0x2,
+}
+
+flag VehicleApPowerStateReq {
+    /**
+     * This requests Android to enter its normal operating state.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_EXIT,
+     * VehicleApPowerStateReport#SHUTDOWN_CANCELLED, or
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL.
+     */
+    VEHICLE_AP_POWER_STATE_REQ_ON = 0,
+
+    /**
+     * The power controller issues this request to shutdown the system.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_EXIT,
+     * VehicleApPowerStateReport#ON,
+     * VehicleApPowerStateReport#SHUTDOWN_CANCELLED,
+     * VehicleApPowerStateReport#SHUTDOWN_POSTPONE,
+     * VehicleApPowerStateReport#SHUTDOWN_PREPARE, or
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL.
+     *
+     * int32Values[1] : One of VehicleApPowerStateShutdownParam.
+     *                  This parameter indicates if the AP should shut
+     *                  down fully or sleep. This parameter also
+     *                  indicates if the shutdown should be immediate
+     *                  or if it can be postponed. If the shutdown can
+     *                  be postponed, AP requests postponing by sending
+     *                  VehicleApPowerStateReport#SHUTDOWN_POSTPONE.
+     */
+    VEHICLE_AP_POWER_STATE_REQ_SHUTDOWN_PREPARE = 1,
+
+    /**
+     * Cancel the shutdown.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#SHUTDOWN_POSTPONE or
+     * VehicleApPowerStateReport#SHUTDOWN_PREPARE.
+     * After receiving this request, the AP will report
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL in preparation to going ON.
+     */
+    VEHICLE_AP_POWER_STATE_REQ_CANCEL_SHUTDOWN = 2,
+
+    /**
+     * Completes the shutdown process.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_ENTRY or
+     * VehicleApPowerStateReport#SHUTDOWN_START. The AP will not report new
+     * state information after receiving this request.
+     */
+    VEHICLE_AP_POWER_STATE_REQ_FINISHED = 3,
+}
+
+/**
+ * Index in int32Values for VehicleProperty#AP_POWER_STATE_REQ property.
+ */
+flag VehicleApPowerStateReqIndex {
+    VEHICLE_AP_POWER_STATE_REQ_INDEX_STATE = 0,
+    VEHICLE_AP_POWER_STATE_REQ_INDEX_ADDITIONAL = 1,
+}
+
+
+
+flag VehicleApPowerStateShutdownParam {
+    /** AP must shutdown immediately. Postponing is not allowed. */
+    VEHICLE_AP_POWER_STATE_SHUTDOWN_PARAM_SHUTDOWN_IMMEDIATELY = 1,
+
+    /** AP can enter deep sleep instead of shutting down completely. */
+    VEHICLE_AP_POWER_STATE_SHUTDOWN_PARAM_CAN_SLEEP = 2,
+
+    /** AP can only shutdown with postponing allowed. */
+    VEHICLE_AP_POWER_STATE_SHUTDOWN_PARAM_SHUTDOWN_ONLY = 3,
+
+    /**
+     * AP may enter deep sleep, but must either sleep or shut down immediately.
+     * Postponing is not allowed. */
+    VEHICLE_AP_POWER_STATE_SHUTDOWN_PARAM_SLEEP_IMMEDIATELY = 4,
+}
+
+flag VehicleApPowerStateReport {
+    /**
+     * The device has booted. CarService has initialized and is ready to accept commands
+     * from VHAL. The user is not logged in, and vendor apps and services are expected to
+     * control the display and audio.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
+     */
+    VEHICLE_AP_POWER_STATE_REPORT_WAIT_FOR_VHAL = 0x1,
+
+    /**
+     * AP is ready to suspend.
+     * The AP will not send any more state reports after this.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#FINISHED.
+     * Other power state requests are ignored.
+     *
+     * int32Values[1]: Time to turn AP back on, in seconds. Power controller should turn on
+     *                 AP after the specified time has elapsed, so AP can run tasks like
+     *                 update. If this value is 0, no wake up is requested. The power
+     *                 controller may not necessarily support timed wake-up.
+     */
+    VEHICLE_AP_POWER_STATE_REPORT_DEEP_SLEEP_ENTRY = 0x2,
+
+    /**
+     * AP is exiting from deep sleep state.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
+     */
+    VEHICLE_AP_POWER_STATE_REPORT_DEEP_SLEEP_EXIT = 0x3,
+
+    /**
+     * AP sends this message repeatedly while cleanup and idle tasks execute.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE
+     * requesting immediate shutdown or VehicleApPowerStateReq#CANCEL_SHUTDOWN. Other
+     * power state requests are ignored.
+     *
+     * int32Values[1]: Time to postpone shutdown in ms. Maximum value is
+     *                 5000 ms.
+     *                 If AP needs more time, it will send another SHUTDOWN_POSTPONE
+     *                 message before the previous one expires.
+     */
+    VEHICLE_AP_POWER_STATE_REPORT_SHUTDOWN_POSTPONE = 0x4,
+
+    /**
+     * AP is ready to shutdown.
+     * The AP will not send any more state reports after this.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#FINISHED.
+     * Other power state requests are ignored.
+     *
+     * int32Values[1]: Time to turn AP back on, in seconds. Power controller should turn on
+     *                 AP after the specified time has elapsed so AP can run tasks like
+     *                 update. If this value is 0, no wake up is specified. The power
+     *                 controller may not necessarily support timed wake-up.
+     */
+    VEHICLE_AP_POWER_STATE_REPORT_SHUTDOWN_START = 0x5,
+
+    /**
+     * AP is entering its normal operating state.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE.
+     * Other power state requests are ignored.
+     */
+    VEHICLE_AP_POWER_STATE_REPORT_ON = 0x6,
+
+    /**
+     * AP is preparing to shut down. In this state, Garage Mode is active and idle
+     * tasks are allowed to run.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE
+     * requesting immediate shutdown or VehicleApPowerStateReq#CANCEL_SHUTDOWN. Other
+     * power state requests are ignored.
+     */
+    VEHICLE_AP_POWER_STATE_REPORT_SHUTDOWN_PREPARE = 0x7,
+
+    /**
+     * AP has stopped preparing to shut down.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
+     */
+    VEHICLE_AP_POWER_STATE_REPORT_SHUTDOWN_CANCELLED = 0x8,
+}
+
+flag VehicleHwKeyInputAction {
+    /** Key down */
+    VEHICLE_HW_KEY_INPUT_ACTION_DOWN = 0,
+
+    /** Key up */
+    VEHICLE_HW_KEY_INPUT_ACTION_UP = 1,
+}
+
+flag VehicleDisplay {
+    /** The primary Android display (for example, center console) */
+    VEHICLE_DISPLAY_MAIN = 0,
+    VEHICLE_DISPLAY_INSTRUMENT_CLUSTER = 1,
+}
+
+/**
+ * Units used for readonly int or float type with no attached enum types.
+ */
+flag VehicleUnit {
+    SHOULD_NOT_USE      = 0x000,
+
+    METER_PER_SEC       = 0x01,
+    RPM                 = 0x02,
+    HERTZ               = 0x03,
+    PERCENTILE          = 0x10,
+    MILLIMETER          = 0x20,
+    METER               = 0x21,
+    KILOMETER           = 0x23,
+    MILE                = 0x24,
+    CELSIUS             = 0x30,
+    FAHRENHEIT          = 0x31,
+    KELVIN              = 0x32,
+    MILLILITER          = 0x40,
+    LITER               = 0x41,
+    US_GALLON           = 0x42,
+    IMPERIAL_GALLON     = 0x43,
+    NANO_SECS           = 0x50,
+    SECS                = 0x53,
+    YEAR                = 0x59,
+
+    // Electrical Units
+    WATT_HOUR           = 0x60,
+    MILLIAMPERE         = 0x61,
+    MILLIVOLT           = 0x62,
+    MILLIWATTS          = 0x63,
+    AMPERE_HOURS        = 0x64,
+    KILOWATT_HOUR       = 0x65,
+
+    KILOPASCAL          = 0x70,
+    PSI                 = 0x71,
+    BAR                 = 0x72,
+    DEGREES             = 0x80,
+
+    MILES_PER_HOUR      = 0x90,
+    KILOMETERS_PER_HOUR = 0x91,
+}
+
+/**
+ * Property status is a dynamic value that may change based on the vehicle state.
+ */
+flag VehiclePropertyStatus {
+    /** Property is available and behaving normally */
+    VEHICLE_PROPERTY_STATUS_AVAILABLE   = 0x00,
+    /**
+     * A property in this state is not available for reading and writing.  This
+     * is a transient state that depends on the availability of the underlying
+     * implementation (e.g. hardware or driver). It MUST NOT be used to
+     * represent features that this vehicle is always incapable of.  A get() of
+     * a property in this state MAY return an undefined value, but MUST
+     * correctly describe its status as UNAVAILABLE A set() of a property in
+     * this state MAY return NOT_AVAILABLE. The HAL implementation MUST ignore
+     * the value of the status field when writing a property value coming from
+     * Android.
+     */
+    VEHICLE_PROPERTY_STATUS_UNAVAILABLE = 0x01,
+    /** There is an error with this property. */
+    VEHICLE_PROPERTY_STATUS_ERROR       = 0x02,
+}
+
+/**
+ * Various gears which can be selected by user and chosen in system.
+ */
+flag VehicleGear {
+    GEAR_UNKNOWN = 0x0000,
+    GEAR_NEUTRAL = 0x0001,
+    GEAR_REVERSE = 0x0002,
+    GEAR_PARK = 0x0004,
+    GEAR_DRIVE = 0x0008,
+    GEAR_1 = 0x0010,
+    GEAR_2 = 0x0020,
+    GEAR_3 = 0x0040,
+    GEAR_4 = 0x0080,
+    GEAR_5 = 0x0100,
+    GEAR_6 = 0x0200,
+    GEAR_7 = 0x0400,
+    GEAR_8 = 0x0800,
+    GEAR_9 = 0x1000,
+}
+
+/**
+ * Various Seats in the car.
+ */
+flag VehicleAreaSeat {
+    VEHICLE_AREA_SEAT_ROW_1_LEFT   = 0x0001,
+    VEHICLE_AREA_SEAT_ROW_1_CENTER = 0x0002,
+    VEHICLE_AREA_SEAT_ROW_1_RIGHT  = 0x0004,
+    VEHICLE_AREA_SEAT_ROW_2_LEFT   = 0x0010,
+    VEHICLE_AREA_SEAT_ROW_2_CENTER = 0x0020,
+    VEHICLE_AREA_SEAT_ROW_2_RIGHT  = 0x0040,
+    VEHICLE_AREA_SEAT_ROW_3_LEFT   = 0x0100,
+    VEHICLE_AREA_SEAT_ROW_3_CENTER = 0x0200,
+    VEHICLE_AREA_SEAT_ROW_3_RIGHT  = 0x0400
+}
+
+/**
+ * Various windshields/windows in the car.
+ */
+flag VehicleAreaWindow {
+    VEHICLE_AREA_WINDOW_FRONT_WINDSHIELD  = 0x00000001,
+    VEHICLE_AREA_WINDOW_REAR_WINDSHIELD   = 0x00000002,
+    VEHICLE_AREA_WINDOW_ROW_1_LEFT        = 0x00000010,
+    VEHICLE_AREA_WINDOW_ROW_1_RIGHT       = 0x00000040,
+    VEHICLE_AREA_WINDOW_ROW_2_LEFT        = 0x00000100,
+    VEHICLE_AREA_WINDOW_ROW_2_RIGHT       = 0x00000400,
+    VEHICLE_AREA_WINDOW_ROW_3_LEFT        = 0x00001000,
+    VEHICLE_AREA_WINDOW_ROW_3_RIGHT       = 0x00004000,
+    VEHICLE_AREA_WINDOW_ROOF_TOP_1        = 0x00010000,
+    VEHICLE_AREA_WINDOW_ROOF_TOP_2        = 0x00020000,
+}
+
+flag VehicleAreaDoor {
+    VEHICLE_AREA_DOOR_ROW_1_LEFT = 0x00000001,
+    VEHICLE_AREA_DOOR_ROW_1_RIGHT = 0x00000004,
+    VEHICLE_AREA_DOOR_ROW_2_LEFT = 0x00000010,
+    VEHICLE_AREA_DOOR_ROW_2_RIGHT = 0x00000040,
+    VEHICLE_AREA_DOOR_ROW_3_LEFT = 0x00000100,
+    VEHICLE_AREA_DOOR_ROW_3_RIGHT = 0x00000400,
+    VEHICLE_AREA_DOOR_HOOD = 0x10000000,
+    VEHICLE_AREA_DOOR_REAR = 0x20000000,
+}
+
+flag VehicleAreaMirror {
+    VEHICLE_AREA_MIRROR_DRIVER_LEFT = 0x00000001,
+    VEHICLE_AREA_MIRROR_DRIVER_RIGHT = 0x00000002,
+    VEHICLE_AREA_MIRROR_DRIVER_CENTER = 0x00000004,
+}
+
+flag VehicleTurnSignal {
+    VEHICLE_TURN_SIGNAL_NONE = 0x00,
+    VEHICLE_TURN_SIGNAL_RIGHT = 0x01,
+    VEHICLE_TURN_SIGNAL_LEFT = 0x02,
+}
+
+flag VehicleIgnitionState {
+    VEHICLE_IGNITION_STATE_UNDEFINED = 0,
+
+    /** Steering wheel is locked */
+    VEHICLE_IGNITION_STATE_LOCK = 1,
+
+    /**
+     * Steering wheel is not locked, engine and all accessories are OFF. If
+     * car can be in LOCK and OFF state at the same time than HAL must report
+     * LOCK state.
+     */
+    VEHICLE_IGNITION_STATE_OFF = 2,
+
+    /**
+     * Typically in this state accessories become available (e.g. radio).
+     * Instrument cluster and engine are turned off
+     */
+    VEHICLE_IGNITION_STATE_ACC = 3,
+
+    /**
+     * Ignition is in state ON. Accessories and instrument cluster available,
+     * engine might be running or ready to be started.
+     */
+    VEHICLE_IGNITION_STATE_ON = 4,
+
+    /** Typically in this state engine is starting (cranking). */
+    VEHICLE_IGNITION_STATE_START = 5,
+}
+
+flag VehicleAreaWheel {
+    VEHICLE_AREA_WHEEL_UNKNOWN = 0x0,
+    VEHICLE_AREA_WHEEL_LEFT_FRONT = 0x1,
+    VEHICLE_AREA_WHEEL_RIGHT_FRONT = 0x2,
+    VEHICLE_AREA_WHEEL_LEFT_REAR = 0x4,
+    VEHICLE_AREA_WHEEL_RIGHT_REAR = 0x8,
+}
+
+/**
+ * A rotary control which can rotate without limits. These controls use HW_ROTARY_INPUT to report
+ * relative clockwise or counterclockwise motion. They have no absolute position.
+ */
+flag RotaryInputType {
+    /**
+     * Main rotary control, typically in the center console, used to navigate the user interface.
+     */
+    ROTARY_INPUT_TYPE_SYSTEM_NAVIGATION = 0,
+
+    /** Volume control for adjusting audio volume. */
+    ROTARY_INPUT_TYPE_AUDIO_VOLUME = 1,
+}

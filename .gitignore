@@ -1,0 +1,24 @@
+# Build artefacts
+build*/
+translations.db*
+*.qmlproject.qtds
+share_rc.py
+share.qrc
+
+# User files
+CMakeLists.txt.user
+CMakeLists.txt.user.*
+*.qtds
+.vscode/
+
+# backup files
+*.autosave
+*.bak
+*.~*
+.*.swp
+i18n/
+
+# DS share online
+temp.*
+temp_rc.*
+share.qmlrc
