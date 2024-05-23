@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QtIf.Android.VehicleProperties
 
@@ -22,12 +23,12 @@ ApplicationWindow {
 
             anchors.centerIn: parent
 
-            text: 'Example application'
+            text: 'Example QtIF + AAOS'
             color: 'white'
         }
     }
 
-    ColumnLayout{
+    RowLayout{
 
         anchors.centerIn: parent
 
