@@ -5,6 +5,8 @@
 
 package io.qt.{{module|qml_type|lower}};
 
+// Modification
+
 import android.annotation.SuppressLint;
 import android.car.VehiclePropertyIds;
 import android.util.Log;

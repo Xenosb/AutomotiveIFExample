@@ -2,17 +2,16 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 
+import QtIf.Android.VehicleProperties
+
 ApplicationWindow {
     id: root
     visible: true
 
     title: qsTr("Hello World")
 
-    readonly property int outerMargin: 10
-    font.pointSize: Math.round(Math.min(width, height) / 1000 * 32)
-
     background: Rectangle {
-        color: "black"
+        color: 'black'
     }
 
     header: Item {
@@ -20,17 +19,34 @@ ApplicationWindow {
 
         Label {
             id: titleLabel
-            anchors.centerIn: parent
-            text: 'Example application'
 
-            Component.onCompleted: font.pointSize *= 1.5
+            anchors.centerIn: parent
+
+            text: 'Example application'
+            color: 'white'
         }
     }
 
-    Label {
-        id: contentLabel
+    ColumnLayout{
 
         anchors.centerIn: parent
-        text: 'Content'
+
+        Label {
+            id: speedLabel
+
+            text: "Speed (m/s):"
+            color: 'white'
+        }
+
+        Label {
+            id: speedValueLabel
+
+            text: driveInfo.perfVehicleSpeed
+            color: 'white'
+        }
+    }
+
+    DriveInfo {
+        id: driveInfo
     }
 }

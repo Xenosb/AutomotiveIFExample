@@ -1,7 +1,8 @@
 set(MODULE_NAME AutomotiveFrontend)
 
 qt_add_library(
-    ${MODULE_NAME} STATIC
+    ${MODULE_NAME}
+    STATIC
 )
 
 set_target_properties(

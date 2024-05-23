@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(AutomotiveIF VERSION 0.1 LANGUAGES CXX)
+project(AutomotiveInterfaceExample VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -16,11 +16,12 @@ qt_standard_project_setup(
     REQUIRES 6.5
 )
 
-# add_subdirectory(frontend)
-# add_subdirectory(backend)
+add_subdirectory(frontend)
+add_subdirectory(backend)
 
 qt_add_executable(
     ${CMAKE_PROJECT_NAME}
+        MANUAL_FINALIZATION
         main.cpp
 )
 
@@ -35,7 +36,10 @@ qt_add_qml_module(
 target_link_libraries(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        AutomotiveFrontend
         Qt::Quick
+        Qt::InterfaceFramework
+        Qt::IfAndroidVehicleProperties
 )
 
 set_target_properties(
@@ -47,7 +51,7 @@ set_target_properties(
         QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
 )
 
-include(GNUInstallDirs)
+qt_finalize_target(${CMAKE_PROJECT_NAME})
 
 install(
     TARGETS ${CMAKE_PROJECT_NAME}
@@ -55,3 +59,7 @@ install(
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if (ANDROID)
+    include(C:/workspace_android/SDK/android_openssl/CMakeLists.txt)
+endif()

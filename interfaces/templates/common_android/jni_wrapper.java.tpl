@@ -5,8 +5,6 @@
 
 package io.qt.{{module|qml_type|lower}};
 
-// Special comment because I am special
-
 public class {{interface}} {
 {% for property in interface.properties %}
 {%   if interface_zoned %}

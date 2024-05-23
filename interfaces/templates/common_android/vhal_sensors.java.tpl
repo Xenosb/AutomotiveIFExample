@@ -5,6 +5,8 @@
 
 package io.qt.{{module|qml_type|lower}};
 
+// Modification 2
+
 import java.util.Set;
 import java.util.HashSet;
 
